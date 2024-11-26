@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- [Your existing head content] -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokpong Songmuang</title>
     <style>
-        /* [Your existing styles] */
         body {
             font-family: 'Georgia', serif;
             margin: 0;
@@ -74,23 +72,6 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        /* Add styles for the table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-        }
-        table, th, td {
-            border: 1px solid #333;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #005b99;
-            color: #fff;
-        }
     </style>
 </head>
 <body>
@@ -126,20 +107,9 @@
         <p>Pokpong Songmuang is a lecturer at Thammasat University, with research interests in artificial intelligence, digital competence, and data science. His work includes studies on the Bees algorithm for test construction, computerized adaptive testing, salary prediction systems for student motivation, and activity recognition using supervised learning models. He has contributed to the field through numerous publications and aims to leverage technology to solve real-world problems and enhance educational outcomes.</p>
         <p>For more details, you can visit <a href="https://scholar.google.co.th/citations?user=UCNA6dQAAAAJ&hl=th" target="_blank">Pokpong Songmuang's Google Scholar Profile</a> or <a href="https://orcid.org/0000-0002-4831-686X" target="_blank">ORCID Profile</a>.</p>
         <h3>Publications</h3>
-        <!-- Replace the unordered list with a table -->
-        <table id="publications-table">
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Title</th>
-                    <th>Publication Date</th>
-                    <th>Journal/Conference</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Publications will be dynamically inserted here -->
-            </tbody>
-        </table>
+        <ul id="publications-list">
+            <!-- Publications will be dynamically inserted here -->
+        </ul>
     </section>
 
     <section id="awards">
@@ -165,6 +135,33 @@
             <li>Research Assistant, Graduate School of Information Systems, The University of Electro-Communications, Tokyo, Japan (2005-2009)</li>
         </ul>
     </section>
+<section id="crypto-prices">
+    <h2>Cryptocurrency Prices</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Cryptocurrency</th>
+                <th>Symbol</th>
+                <th>Price (USD)</th>
+            </tr>
+        </thead>
+        <tbody id="crypto-table">
+            <tr><td colspan="3">Loading...</td></tr>
+        </tbody>
+    </table>
+    <p class="updated-time" id="crypto-update-time"></p>
+</section>
+
+<section id="fear-greed-index">
+    <h2>Fear and Greed Index</h2>
+    <div style="display: flex; justify-content: center; align-items: center;">
+        <div id="thermometer-container" style="width: 50%; max-width: 300px; height: 20px; background-color: #e0e0e0; border-radius: 10px; position: relative; margin: 20px;">
+            <div id="thermometer-fill" style="width: 0%; height: 100%; background-color: #4caf50; border-radius: 10px;"></div>
+        </div>
+    </div>
+    <p id="thermometer-label" style="text-align: center; font-size: 1.2em;">Loading...</p>
+</section>
+
 
 </div>
 
@@ -181,38 +178,13 @@
                 }
             });
             const data = await response.json();
-            const publicationsTable = document.getElementById('publications-table').getElementsByTagName('tbody')[0];
-            data.group.forEach((workGroup, index) => {
-                const workSummary = workGroup['work-summary'][0];
-                const putCode = workSummary['put-code'];
-
-                // Fetch detailed information for each work
-                fetch(`https://pub.orcid.org/v3.0/0000-0002-4831-686X/work/${putCode}`, {
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(workDetails => {
-                    const title = workDetails.title.title.value;
-                    const publicationDate = workDetails['publication-date'];
-                    const year = publicationDate && publicationDate.year ? publicationDate.year.value : 'N/A';
-                    const journalTitle = workDetails['journal-title'] ? workDetails['journal-title'].value : 'N/A';
-
-                    const row = publicationsTable.insertRow();
-                    const cellNo = row.insertCell(0);
-                    const cellTitle = row.insertCell(1);
-                    const cellYear = row.insertCell(2);
-                    const cellJournal = row.insertCell(3);
-
-                    cellNo.textContent = index + 1;
-                    cellTitle.innerHTML = title;
-                    cellYear.textContent = year;
-                    cellJournal.textContent = journalTitle;
-                })
-                .catch(error => {
-                    console.error('Error fetching work details:', error);
-                });
+            const publicationsList = document.getElementById('publications-list');
+            data.group.forEach((work, index) => {
+                const title = work['work-summary'][0].title.title.value;
+                const year = work['work-summary'][0]['publication-date'] ? work['work-summary'][0]['publication-date'].year.value : 'N/A';
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<strong>${index + 1}. ${title} - ${year}</strong>`;
+                publicationsList.appendChild(listItem);
             });
         } catch (error) {
             console.error('Error fetching ORCID data:', error);
@@ -220,6 +192,114 @@
     }
 
     fetchORCIDData();
+</script>
+
+<script>
+    async function fetchFearGreedIndex() {
+        const apiUrl = 'https://api.alternative.me/fng/';
+
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            if (data && data.data && data.data.length > 0) {
+                const indexData = data.data[0];
+                const indexValue = parseInt(indexData.value, 10);
+                const indexLabel = indexData.value_classification;
+                const updateTime = indexData.timestamp;
+
+                // Update thermometer
+                const thermometerFill = document.getElementById('thermometer-fill');
+                const thermometerLabel = document.getElementById('thermometer-label');
+                thermometerFill.style.width = `${indexValue}%`;
+                thermometerFill.style.backgroundColor = getThermometerColor(indexValue);
+                thermometerLabel.innerHTML = `
+                    <strong>Index:</strong> ${indexValue} (${indexLabel})<br>
+                    <small>Last updated: ${new Date(updateTime * 1000).toLocaleString()}</small>
+                `;
+            } else {
+                throw new Error('Invalid data format');
+            }
+        } catch (error) {
+            console.error('Error fetching Fear and Greed Index:', error);
+            const thermometerLabel = document.getElementById('thermometer-label');
+            thermometerLabel.innerHTML = 'Error loading data. Please try again later.';
+        }
+    }
+
+    function getThermometerColor(value) {
+        if (value < 25) return '#f44336'; // Red for extreme fear
+        if (value < 50) return '#ff9800'; // Orange for fear
+        if (value < 75) return '#4caf50'; // Green for greed
+        return '#8bc34a'; // Light green for extreme greed
+    }
+
+    // Fetch Fear and Greed Index on load
+    fetchFearGreedIndex();
+
+    // Optionally, refresh the data every hour
+    setInterval(fetchFearGreedIndex, 3600000);
+</script>
+
+<script>
+    async function fetchCryptoPrices() {
+        const cryptoUrls = {
+            BTC: 'https://api.coindesk.com/v1/bpi/currentprice/BTC.json',
+            ADA: 'https://api.binance.com/api/v3/ticker/price?symbol=ADAUSDT',
+            ETH: 'https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT',
+            BNB: 'https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT',
+            DOGE: 'https://api.binance.com/api/v3/ticker/price?symbol=DOGEUSDT'
+        };
+
+        const cryptoNames = {
+            BTC: 'Bitcoin',
+            ADA: 'Cardano',
+            ETH: 'Ethereum',
+            BNB: 'Binance Coin',
+            DOGE: 'Dogecoin'
+        };
+
+        const tableBody = document.getElementById('crypto-table');
+        const updateTime = document.getElementById('crypto-update-time');
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        const promises = Object.entries(cryptoUrls).map(async ([symbol, url]) => {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                let price;
+                if (symbol === 'BTC') {
+                    price = data.bpi.USD.rate_float.toFixed(2);
+                } else {
+                    price = parseFloat(data.price).toFixed(2);
+                }
+
+                return `<tr>
+                    <td>${cryptoNames[symbol]}</td>
+                    <td>${symbol}</td>
+                    <td>$${price}</td>
+                </tr>`;
+            } catch (error) {
+                console.error(`Error fetching ${symbol} price:`, error);
+                return `<tr>
+                    <td>${cryptoNames[symbol]}</td>
+                    <td>${symbol}</td>
+                    <td>Error</td>
+                </tr>`;
+            }
+        });
+
+        const results = await Promise.all(promises);
+        tableBody.innerHTML = results.join('');
+
+        const now = new Date();
+        updateTime.textContent = `Last updated: ${now.toLocaleString()}`;
+    }
+
+    // Fetch prices on load and refresh every 30 seconds
+    fetchCryptoPrices();
+    setInterval(fetchCryptoPrices, 30000);
 </script>
 
 </body>
