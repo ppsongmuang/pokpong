@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- [Your existing head content] -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokpong Songmuang</title>
     <style>
+        /* [Your existing styles] */
         body {
             font-family: 'Georgia', serif;
             margin: 0;
@@ -72,6 +74,23 @@
             text-align: center;
             margin-bottom: 20px;
         }
+        /* Add styles for the table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+        table, th, td {
+            border: 1px solid #333;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #005b99;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -107,9 +126,20 @@
         <p>Pokpong Songmuang is a lecturer at Thammasat University, with research interests in artificial intelligence, digital competence, and data science. His work includes studies on the Bees algorithm for test construction, computerized adaptive testing, salary prediction systems for student motivation, and activity recognition using supervised learning models. He has contributed to the field through numerous publications and aims to leverage technology to solve real-world problems and enhance educational outcomes.</p>
         <p>For more details, you can visit <a href="https://scholar.google.co.th/citations?user=UCNA6dQAAAAJ&hl=th" target="_blank">Pokpong Songmuang's Google Scholar Profile</a> or <a href="https://orcid.org/0000-0002-4831-686X" target="_blank">ORCID Profile</a>.</p>
         <h3>Publications</h3>
-        <ul id="publications-list">
-            <!-- Publications will be dynamically inserted here -->
-        </ul>
+        <!-- Replace the unordered list with a table -->
+        <table id="publications-table">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Title</th>
+                    <th>Publication Date</th>
+                    <th>Journal/Conference</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Publications will be dynamically inserted here -->
+            </tbody>
+        </table>
     </section>
 
     <section id="awards">
@@ -151,13 +181,38 @@
                 }
             });
             const data = await response.json();
-            const publicationsList = document.getElementById('publications-list');
-            data.group.forEach((work, index) => {
-                const title = work['work-summary'][0].title.title.value;
-                const year = work['work-summary'][0]['publication-date'] ? work['work-summary'][0]['publication-date'].year.value : 'N/A';
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `<strong>${index + 1}. ${title} - ${year}</strong>`;
-                publicationsList.appendChild(listItem);
+            const publicationsTable = document.getElementById('publications-table').getElementsByTagName('tbody')[0];
+            data.group.forEach((workGroup, index) => {
+                const workSummary = workGroup['work-summary'][0];
+                const putCode = workSummary['put-code'];
+
+                // Fetch detailed information for each work
+                fetch(`https://pub.orcid.org/v3.0/0000-0002-4831-686X/work/${putCode}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(workDetails => {
+                    const title = workDetails.title.title.value;
+                    const publicationDate = workDetails['publication-date'];
+                    const year = publicationDate && publicationDate.year ? publicationDate.year.value : 'N/A';
+                    const journalTitle = workDetails['journal-title'] ? workDetails['journal-title'].value : 'N/A';
+
+                    const row = publicationsTable.insertRow();
+                    const cellNo = row.insertCell(0);
+                    const cellTitle = row.insertCell(1);
+                    const cellYear = row.insertCell(2);
+                    const cellJournal = row.insertCell(3);
+
+                    cellNo.textContent = index + 1;
+                    cellTitle.innerHTML = title;
+                    cellYear.textContent = year;
+                    cellJournal.textContent = journalTitle;
+                })
+                .catch(error => {
+                    console.error('Error fetching work details:', error);
+                });
             });
         } catch (error) {
             console.error('Error fetching ORCID data:', error);
